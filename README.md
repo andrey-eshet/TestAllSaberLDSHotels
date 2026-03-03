@@ -1,3 +1,5 @@
+https://andrey-eshet.github.io/TestAllSaberLDSHotels/
+
 # SabreLDS Hotel Static Data Checker
 
 Automated verification of hotel static data arrival from SabreLDS via hgwcore AbroadStaticData/Hotel endpoint.
