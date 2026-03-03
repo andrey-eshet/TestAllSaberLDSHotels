@@ -1,0 +1,46 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual environment
+.venv/
+venv/
+env/
+
+# Environment variables
+.env
+
+# Excel temp files
+~$*
+
+# Artifacts (debug html/tokens)
+artifacts/html/*
+artifacts/tokens/*
+!artifacts/html/.gitkeep
+!artifacts/tokens/.gitkeep
+
+# Reports (generated)
+reports/*.md
+reports/*.json
+reports/*.csv
+reports/*.html
+reports/*.xlsx
+!reports/.keep
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Root-level xlsx copies (originals live in data/)
+/*.xlsx

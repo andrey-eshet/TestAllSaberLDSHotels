@@ -1,0 +1,116 @@
+name: SabreLDS Hotel Static Data Check
+
+on:
+  # Manual trigger with optional parameters
+  workflow_dispatch:
+    inputs:
+      retry_count:
+        description: "Number of retry attempts per hotel"
+        required: false
+        default: "2"
+      timeout_seconds:
+        description: "HTTP timeout in seconds"
+        required: false
+        default: "30"
+
+  # Optional: schedule (uncomment to run weekly)
+  # schedule:
+  #   - cron: '0 6 * * 1'  # Every Monday at 06:00 UTC
+
+jobs:
+  check-hotels:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360  # 6 hours max
+
+    # Grant permissions for GitHub Pages deployment
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Create .env from inputs
+        run: |
+          cat > .env << 'EOF'
+          DATA_HOTEL_LIST_XLSX=data/simaFullHotelList.xlsx
+          DATA_MISSING_CODES_XLSX=data/missing_sabre_codes_after_Meital_filtering.xlsx
+          BASE_URL_HOTEL=https://hgwcore.azurewebsites.net/AbroadStaticData/Hotel
+          VENDOR=SabreLDS
+          HOTEL_ID_TYPE=Sabre
+          RETRY_COUNT=${{ github.event.inputs.retry_count || '2' }}
+          TIMEOUT_SECONDS=${{ github.event.inputs.timeout_seconds || '30' }}
+          USE_PLAYWRIGHT_FOR_TOKEN=false
+          EOF
+
+      - name: Run hotel static data check
+        run: python scripts/run_local.py
+
+      - name: Upload reports as artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hotel-reports
+          path: |
+            reports/report.html
+            reports/report.json
+            reports/report_complete.csv
+            reports/report_problems.csv
+            reports/report_summary.csv
+            reports/report.md
+          retention-days: 30
+
+      - name: Upload debug artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug-html
+          path: artifacts/
+          retention-days: 7
+
+      # Deploy report.html to GitHub Pages
+      - name: Prepare Pages content
+        if: always()
+        run: |
+          mkdir -p _site
+          cp reports/report.html _site/index.html
+          # Also include CSV/JSON for download links
+          cp reports/report.json _site/report.json
+          cp reports/report_complete.csv _site/report_complete.csv
+          cp reports/report_problems.csv _site/report_problems.csv
+          cp reports/report_summary.csv _site/report_summary.csv
+
+      - name: Upload Pages artifact
+        if: always()
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy-report:
+    needs: check-hotels
+    if: always()
+    runs-on: ubuntu-latest
+
+    permissions:
+      pages: write
+      id-token: write
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
