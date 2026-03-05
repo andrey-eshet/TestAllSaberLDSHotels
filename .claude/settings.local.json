@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(.venv/Scripts/pip install -r requirements.txt)",
+      "Bash(.venv/Scripts/python scripts/run_local.py)",
+      "Bash(start \"\" \"c:/Users/Misni/Dev/testLDS_hotels/reports/report.html\")",
+      "Bash(.venv/Scripts/python -c \":*)"
+    ]
+  }
+}

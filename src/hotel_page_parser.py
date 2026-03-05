@@ -38,6 +38,9 @@ class HotelParseResult:
     found: bool = False
     name: str = ""
     stars: str = ""
+    zone: str = ""
+    destination_name: str = ""
+    country_name: str = ""
     images: List[ImageInfo] = field(default_factory=list)
     token_url: str = ""
     raw_html: str = ""
@@ -101,15 +104,28 @@ def _page_has_data(html: str, hotel_id: str) -> bool:
 
 
 def _parse_fields(html: str, result: HotelParseResult) -> None:
-    """Extract Name, Stars, Images table from the HTML page."""
+    """Extract Name, Stars, Zone, Destination Name, Country Name, Images."""
     soup = BeautifulSoup(html, "html.parser")
 
     result.name = _find_value_by_label(soup, "Name") or ""
     result.stars = _find_value_by_label(soup, "Stars") or ""
+    result.zone = _find_th_td_value(soup, "Zone")
+    result.destination_name = _find_th_td_value(soup, "Destination Name")
+    result.country_name = _find_th_td_value(soup, "Country Name")
     result.token_url = _extract_token_url(html)
 
     # --- Images table ---
     result.images = _parse_images_table(soup)
+
+
+def _find_th_td_value(soup: BeautifulSoup, label: str) -> str:
+    """Find exact <th>Label</th><td>Value</td> pair and return value (may be empty)."""
+    th = soup.find("th", string=re.compile(rf"^\s*{re.escape(label)}\s*$", re.I))
+    if th:
+        td = th.find_next_sibling("td")
+        if td:
+            return td.get_text(strip=True)
+    return ""
 
 
 def _find_value_by_label(soup: BeautifulSoup, label: str) -> Optional[str]:

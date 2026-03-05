@@ -173,6 +173,9 @@ def _process_one_hotel(
                 name=result.name,
                 stars=result.stars,
                 images_count=len(result.images),
+                zone=result.zone,
+                destination_name=result.destination_name,
+                country_name=result.country_name,
             )
         )
         log.info("HOTELID=%s  COMPLETE", hotel_id)
@@ -184,6 +187,9 @@ def _process_one_hotel(
                 status="INCOMPLETE",
                 missing_fields=result.missing_fields,
                 name=result.name or "שם לא זמין",
+                zone=result.zone,
+                destination_name=result.destination_name,
+                country_name=result.country_name,
             )
         )
         log.info(
@@ -226,6 +232,9 @@ def _process_one_hotel(
                 destination_en=destination_en,
                 token_url=result.token_url,
                 explanation=explanation,
+                zone=result.zone,
+                destination_name=result.destination_name,
+                country_name=result.country_name,
             )
         )
         log.info(
