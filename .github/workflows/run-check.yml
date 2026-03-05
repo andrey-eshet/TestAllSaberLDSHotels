@@ -1,7 +1,6 @@
 name: SabreLDS Hotel Static Data Check
 
 on:
-  # Manual trigger with optional parameters
   workflow_dispatch:
     inputs:
       retry_count:
@@ -20,9 +19,8 @@ on:
 jobs:
   check-hotels:
     runs-on: ubuntu-latest
-    timeout-minutes: 360  # 6 hours max
+    timeout-minutes: 540  # 9 hours max
 
-    # Grant permissions for GitHub Pages deployment
     permissions:
       contents: read
       pages: write
@@ -43,7 +41,7 @@ jobs:
 
       - name: Create .env from inputs
         run: |
-          cat > .env << 'EOF'
+          cat > .env << EOF
           DATA_HOTEL_LIST_XLSX=data/simaFullHotelList.xlsx
           DATA_MISSING_CODES_XLSX=data/missing_sabre_codes_after_Meital_filtering.xlsx
           BASE_URL_HOTEL=https://hgwcore.azurewebsites.net/AbroadStaticData/Hotel
@@ -79,17 +77,19 @@ jobs:
           path: artifacts/
           retention-days: 7
 
-      # Deploy report.html to GitHub Pages
       - name: Prepare Pages content
         if: always()
         run: |
           mkdir -p _site
-          cp reports/report.html _site/index.html
-          # Also include CSV/JSON for download links
-          cp reports/report.json _site/report.json
-          cp reports/report_complete.csv _site/report_complete.csv
-          cp reports/report_problems.csv _site/report_problems.csv
-          cp reports/report_summary.csv _site/report_summary.csv
+          if [ -f reports/report.html ]; then
+            cp reports/report.html _site/index.html
+            cp reports/report.json _site/report.json 2>/dev/null || true
+            cp reports/report_complete.csv _site/report_complete.csv 2>/dev/null || true
+            cp reports/report_problems.csv _site/report_problems.csv 2>/dev/null || true
+            cp reports/report_summary.csv _site/report_summary.csv 2>/dev/null || true
+          else
+            echo "<h1>Report not generated yet</h1>" > _site/index.html
+          fi
 
       - name: Upload Pages artifact
         if: always()
