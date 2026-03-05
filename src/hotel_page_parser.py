@@ -15,7 +15,7 @@ from src.config import (
     RETRY_COUNT,
     hotel_url,
 )
-from src.utils import get_logger, save_html
+from src.utils import get_logger, safe_get, save_html
 
 log = get_logger(__name__)
 
@@ -61,7 +61,7 @@ def fetch_and_parse(hotel_id: str, client: httpx.Client) -> HotelParseResult:
     for attempt in range(1, RETRY_COUNT + 1):
         log.info("HOTELID=%s  attempt %d/%d  GET %s", hotel_id, attempt, RETRY_COUNT, url)
         try:
-            resp = client.get(url)
+            resp = safe_get(client, url)
             resp.raise_for_status()
             last_html = resp.text
         except httpx.HTTPError as exc:

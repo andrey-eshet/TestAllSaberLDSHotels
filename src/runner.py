@@ -110,6 +110,15 @@ def run() -> None:
                 )
             )
             not_found_count += 1
+            # After a hard timeout, recreate the client — the old connection
+            # pool may be in a bad state with an abandoned thread.
+            if "Hard timeout" in str(exc) or "timeout" in str(exc).lower():
+                log.info("Recreating HTTP client after timeout error")
+                try:
+                    client.close()
+                except Exception:
+                    pass
+                client = make_client()
 
         processed_ids.add(hotel_id)
 

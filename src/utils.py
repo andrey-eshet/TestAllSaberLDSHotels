@@ -1,8 +1,10 @@
-"""Shared helpers: logging setup, HTTP session, file saving."""
+"""Shared helpers: logging setup, HTTP session, file saving, safe requests."""
 
 import logging
 import sys
+import threading
 from pathlib import Path
+from typing import Optional
 
 import httpx
 
@@ -61,6 +63,52 @@ def make_client() -> httpx.Client:
             keepalive_expiry=30.0,
         ),
     )
+
+
+# ---------------------------------------------------------------------------
+# Hard per-request timeout
+# ---------------------------------------------------------------------------
+
+# If httpx's own timeouts fail (socket-level hang, DNS stall), this
+# kills the request from a background thread so the run never gets stuck.
+HARD_REQUEST_TIMEOUT = 45
+
+_log = logging.getLogger(__name__)
+
+
+def safe_get(
+    client: httpx.Client, url: str, timeout: float = HARD_REQUEST_TIMEOUT
+) -> httpx.Response:
+    """client.get() with a threading-based hard timeout safety net.
+
+    Runs the request in a daemon thread; if it doesn't finish within
+    *timeout* seconds the thread is abandoned and ReadTimeout is raised.
+    """
+    result: Optional[httpx.Response] = None
+    error: Optional[BaseException] = None
+
+    def _do_request():
+        nonlocal result, error
+        try:
+            result = client.get(url)
+        except BaseException as exc:
+            error = exc
+
+    t = threading.Thread(target=_do_request, daemon=True)
+    t.start()
+    t.join(timeout=timeout)
+
+    if t.is_alive():
+        _log.warning("HARD TIMEOUT after %ds for %s — abandoning request", timeout, url)
+        raise httpx.ReadTimeout(
+            f"Hard timeout ({timeout}s) exceeded for {url}"
+        )
+
+    if error is not None:
+        raise error  # type: ignore[misc]
+
+    assert result is not None
+    return result
 
 
 # ---------------------------------------------------------------------------

@@ -18,7 +18,7 @@ from bs4 import BeautifulSoup
 import httpx
 
 from src.config import ARTIFACTS_HTML_DIR, ARTIFACTS_TOKENS_DIR, BASE_ORIGIN, USE_PLAYWRIGHT_FOR_TOKEN
-from src.utils import get_logger, save_html
+from src.utils import get_logger, safe_get, save_html
 
 log = get_logger(__name__)
 
@@ -60,7 +60,7 @@ def _extract_via_http(
     try:
         # Step 1: Fetch the Token page
         log.info("HOTELID=%s  fetching token page: %s", hotel_id, token_url)
-        resp = client.get(token_url)
+        resp = safe_get(client, token_url)
         resp.raise_for_status()
         token_html = resp.text
         save_html(ARTIFACTS_TOKENS_DIR, f"{hotel_id}_token.html", token_html)
@@ -77,7 +77,7 @@ def _extract_via_http(
 
         hotelsgw_url = _resolve_url(token_url, hotelsgw_url)
         log.info("HOTELID=%s  fetching HotelsGW: %s", hotel_id, hotelsgw_url)
-        resp = client.get(hotelsgw_url)
+        resp = safe_get(client, hotelsgw_url)
         resp.raise_for_status()
         gw_html = resp.text
         save_html(ARTIFACTS_TOKENS_DIR, f"{hotel_id}_hotelsgw.html", gw_html)
@@ -93,7 +93,7 @@ def _extract_via_http(
 
         umbraco_url = _resolve_url(hotelsgw_url, umbraco_url)
         log.info("HOTELID=%s  fetching Umbraco: %s", hotel_id, umbraco_url)
-        resp = client.get(umbraco_url)
+        resp = safe_get(client, umbraco_url)
         resp.raise_for_status()
         umbraco_html = resp.text
         save_html(ARTIFACTS_TOKENS_DIR, f"{hotel_id}_umbraco.html", umbraco_html)
@@ -109,7 +109,7 @@ def _extract_via_http(
 
         request_url = _resolve_url(umbraco_url, request_url)
         log.info("HOTELID=%s  fetching Request: %s", hotel_id, request_url)
-        resp = client.get(request_url)
+        resp = safe_get(client, request_url)
         resp.raise_for_status()
         request_html = resp.text
         save_html(ARTIFACTS_TOKENS_DIR, f"{hotel_id}_request.html", request_html)
