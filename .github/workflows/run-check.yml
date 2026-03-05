@@ -11,6 +11,10 @@ on:
         description: "HTTP timeout in seconds"
         required: false
         default: "30"
+      workers:
+        description: "Number of parallel threads"
+        required: false
+        default: "5"
 
   # Optional: schedule (uncomment to run weekly)
   # schedule:
@@ -49,6 +53,7 @@ jobs:
           HOTEL_ID_TYPE=Sabre
           RETRY_COUNT=${{ github.event.inputs.retry_count || '2' }}
           TIMEOUT_SECONDS=${{ github.event.inputs.timeout_seconds || '30' }}
+          WORKERS=${{ github.event.inputs.workers || '5' }}
           USE_PLAYWRIGHT_FOR_TOKEN=false
           EOF
 

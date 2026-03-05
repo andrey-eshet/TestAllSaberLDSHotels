@@ -37,6 +37,9 @@ HOTEL_ID_TYPE = os.getenv("HOTEL_ID_TYPE", "Sabre")
 RETRY_COUNT = int(os.getenv("RETRY_COUNT", "2"))
 TIMEOUT_SECONDS = int(os.getenv("TIMEOUT_SECONDS", "30"))
 
+# Concurrency
+WORKERS = int(os.getenv("WORKERS", "5"))
+
 # Token parsing strategy
 USE_PLAYWRIGHT_FOR_TOKEN = os.getenv("USE_PLAYWRIGHT_FOR_TOKEN", "false").lower() == "true"
 
