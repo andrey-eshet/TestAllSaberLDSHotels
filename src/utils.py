@@ -36,18 +36,25 @@ def get_logger(name: str) -> logging.Logger:
 # ---------------------------------------------------------------------------
 
 def make_client() -> httpx.Client:
-    """Create a reusable httpx client with reasonable defaults.
+    """Create a reusable httpx client with strict timeouts.
 
-    - Transport-level retries for transient connection errors
-    - Limited connection pool to avoid resource exhaustion on long runs
-    - Short keepalive to prevent stale connections over hours
+    Each phase has its own timeout to prevent hanging:
+    - connect: 10s  — TCP handshake
+    - read: 20s     — waiting for server response bytes
+    - write: 10s    — sending request
+    - pool: 10s     — waiting for a connection from the pool
+
+    No transport-level retries — we retry at the application level.
     """
-    transport = httpx.HTTPTransport(retries=2)
     return httpx.Client(
-        timeout=httpx.Timeout(TIMEOUT_SECONDS, connect=15.0),
+        timeout=httpx.Timeout(
+            connect=10.0,
+            read=20.0,
+            write=10.0,
+            pool=10.0,
+        ),
         follow_redirects=True,
         headers={"User-Agent": "HotelStaticDataChecker/1.0"},
-        transport=transport,
         limits=httpx.Limits(
             max_connections=10,
             max_keepalive_connections=5,
